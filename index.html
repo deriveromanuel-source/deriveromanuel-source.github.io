@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Madre de Dios Bird Sound Quiz</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2d5016 0%, #1a4d2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .quiz-card {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2d5016;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .audio-section {
+            margin-bottom: 30px;
+        }
+        .audio-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        audio {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .spectrogram {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+            border-radius: 12px;
+            border: 2px solid #ddd;
+        }
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .option-btn {
+            background: #f8f9fa;
+            border: 3px solid #dee2e6;
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 1em;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #2d5016;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(45,80,22,0.2);
+            background: #fff;
+        }
+        .option-btn:disabled {
+            cursor: not-allowed;
+        }
+        .option-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .option-btn.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+        .bird-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #212529;
+            margin-bottom: 5px;
+        }
+        .scientific-name {
+            font-size: 0.95em;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .feedback {
+            margin-top: 25px;
+            padding: 25px;
+            border-radius: 15px;
+            display: none;
+        }
+        .feedback.show {
+            display: block;
+        }
+        .feedback.correct {
+            background: #d4edda;
+            border: 3px solid #28a745;
+        }
+        .feedback.incorrect {
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+        }
+        .feedback h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        .feedback-detail {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        .next-btn {
+            background: #2d5016;
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        .next-btn:hover {
+            background: #1a4d2e;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .attribution {
+            font-size: 0.85em;
+            color: #6c757d;
+            margin-top: 12px;
+        }
+        .attribution a {
+            color: #2d5016;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .attribution a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🦜 Madre de Dios Bird Sound Quiz</h1>
+            <p class="subtitle">Test your knowledge of Amazonian bird calls from Peru</p>
+            <div class="stats">
+                <div class="stat">Score: <span id="score">0</span>/<span id="total">0</span></div>
+                <div class="stat">Question: <span id="questionNum">0</span></div>
+            </div>
+        </header>
+
+        <div class="quiz-card">
+            <div id="loadingState" class="loading-state">
+                <div class="spinner"></div>
+                <p style="color: #666; font-size: 1.1em;">Loading bird sounds from Xeno-canto...</p>
+            </div>
+
+            <div id="quizContent" style="display: none;">
+                <div class="audio-section">
+                    <h2>🎧 Listen to this bird call:</h2>
+                    <audio id="birdAudio" controls preload="auto"></audio>
+                    <canvas id="spectrogram" class="spectrogram"></canvas>
+                </div>
+
+                <div class="options" id="options"></div>
+
+                <div id="feedback" class="feedback">
+                    <h3 id="feedbackTitle"></h3>
+                    <div id="feedbackContent"></div>
+                    <button class="next-btn" onclick="nextQuestion()">Next Question →</button>
+                </div>
+            </div>
+
+            <div id="errorState" style="display: none;">
+                <div class="error-message">
+                    <h3>⚠️ Unable to load bird sounds</h3>
+                    <p id="errorText"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Madre de Dios bird database with taxonomy
+        const BIRDS = [
+            { name: 'Scarlet Macaw', sciName: 'Ara macao', genus: 'Ara', family: 'Psittacidae' },
+            { name: 'Red-and-green Macaw', sciName: 'Ara chloropterus', genus: 'Ara', family: 'Psittacidae' },
+            { name: 'Blue-and-yellow Macaw', sciName: 'Ara ararauna', genus: 'Ara', family: 'Psittacidae' },
+            { name: 'Blue-headed Parrot', sciName: 'Pionus menstruus', genus: 'Pionus', family: 'Psittacidae' },
+            { name: 'Mealy Amazon', sciName: 'Amazona farinosa', genus: 'Amazona', family: 'Psittacidae' },
+            { name: 'Yellow-crowned Amazon', sciName: 'Amazona ochrocephala', genus: 'Amazona', family: 'Psittacidae' },
+            { name: 'Hoatzin', sciName: 'Opisthocomus hoazin', genus: 'Opisthocomus', family: 'Opisthocomidae' },
+            { name: 'Little Tinamou', sciName: 'Crypturellus soui', genus: 'Crypturellus', family: 'Tinamidae' },
+            { name: 'Cinereous Tinamou', sciName: 'Crypturellus cinereus', genus: 'Crypturellus', family: 'Tinamidae' },
+            { name: 'Undulated Tinamou', sciName: 'Crypturellus undulatus', genus: 'Crypturellus', family: 'Tinamidae' },
+            { name: 'Spectacled Owl', sciName: 'Pulsatrix perspicillata', genus: 'Pulsatrix', family: 'Strigidae' },
+            { name: 'Black-faced Antthrush', sciName: 'Formicarius analis', genus: 'Formicarius', family: 'Formicariidae' },
+            { name: 'Rufous-capped Antthrush', sciName: 'Formicarius colma', genus: 'Formicarius', family: 'Formicariidae' },
+            { name: 'Screaming Piha', sciName: 'Lipaugus vociferans', genus: 'Lipaugus', family: 'Cotingidae' },
+            { name: 'Musician Wren', sciName: 'Cyphorhinus arada', genus: 'Cyphorhinus', family: 'Troglodytidae' },
+            { name: 'Thrush-like Schiffornis', sciName: 'Schiffornis turdina', genus: 'Schiffornis', family: 'Tityridae' },
+        ];
+
+        let score = 0;
+        let totalQuestions = 0;
+        let questionNum = 0;
+        let currentBird = null;
+        let currentSound = null;
+        let audioContext = null;
+        let analyser = null;
+        let animationId = null;
+
+        async function fetchBirdSound(bird) {
+            try {
+                // Search Xeno-canto for recordings from Peru
+                const query = encodeURIComponent(`${bird.sciName} cnt:peru`);
+                const url = `https://xeno-canto.org/api/2/recordings?query=${query}`;
+                
+                console.log('Fetching sound for:', bird.name);
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('API Response:', data);
+                
+                if (data.recordings && data.recordings.length > 0) {
+                    // Sort by quality (A > B > C > D)
+                    const sorted = data.recordings.sort((a, b) => {
+                        const quality = { 'A': 4, 'B': 3, 'C': 2, 'D': 1, 'E': 0 };
+                        return (quality[b.q] || 0) - (quality[a.q] || 0);
+                    });
+                    
+                    const recording = sorted[0];
+                    return {
+                        audioUrl: recording.file,
+                        recordist: recording.rec,
+                        location: recording.loc,
+                        type: recording.type,
+                        quality: recording.q,
+                        catalogId: recording.id
+                    };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('Error fetching sound:', error);
+                return null;
+            }
+        }
+
+        function initAudioVisualizer() {
+            const canvas = document.getElementById('spectrogram');
+            const ctx = canvas.getContext('2d');
+            const audio = document.getElementById('birdAudio');
+            
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                const source = audioContext.createMediaElementSource(audio);
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+            }
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 200;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+                
+                ctx.fillStyle = 'rgb(15, 15, 30)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                const barWidth = (canvas.width / bufferLength) * 2.5;
+                let x = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * canvas.height * 0.8;
+                    const hue = 120 + (i / bufferLength) * 60;
+                    const lightness = 40 + (dataArray[i] / 255) * 40;
+                    ctx.fillStyle = `hsl(${hue}, 80%, ${lightness}%)`;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                    x += barWidth + 1;
+                }
+            }
+            
+            draw();
+        }
+
+        function findTaxonomicRelatives(bird, count = 3) {
+            const sameGenus = BIRDS.filter(b => 
+                b.sciName !== bird.sciName && b.genus === bird.genus
+            );
+            
+            const sameFamily = BIRDS.filter(b =>
+                b.sciName !== bird.sciName && 
+                b.family === bird.family && 
+                !sameGenus.includes(b)
+            );
+            
+            const relatives = [...sameGenus, ...sameFamily].slice(0, count);
+            
+            while (relatives.length < count) {
+                const random = BIRDS[Math.floor(Math.random() * BIRDS.length)];
+                if (random.sciName !== bird.sciName && !relatives.includes(random)) {
+                    relatives.push(random);
+                }
+            }
+            
+            return relatives;
+        }
+
+        async function loadQuestion() {
+            questionNum++;
+            totalQuestions++;
+            document.getElementById('questionNum').textContent = questionNum;
+            document.getElementById('total').textContent = totalQuestions;
+            document.getElementById('feedback').classList.remove('show');
+            document.getElementById('options').innerHTML = '';
+            
+            // Show loading
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('quizContent').style.display = 'none';
+            
+            // Select random bird
+            currentBird = BIRDS[Math.floor(Math.random() * BIRDS.length)];
+            console.log('Selected bird:', currentBird.name);
+            
+            // Fetch sound
+            currentSound = await fetchBirdSound(currentBird);
+            
+            if (!currentSound) {
+                console.log('No sound found, trying another bird...');
+                loadQuestion();
+                return;
+            }
+            
+            // Hide loading, show quiz
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('quizContent').style.display = 'block';
+            
+            // Setup audio
+            const audio = document.getElementById('birdAudio');
+            audio.src = currentSound.audioUrl;
+            
+            // Initialize visualizer on first play
+            audio.addEventListener('play', () => {
+                if (!audioContext) {
+                    initAudioVisualizer();
+                }
+            }, { once: true });
+            
+            // Generate options
+            const wrongBirds = findTaxonomicRelatives(currentBird, 3);
+            const allOptions = [currentBird, ...wrongBirds].sort(() => Math.random() - 0.5);
+            
+            const optionsDiv = document.getElementById('options');
+            allOptions.forEach(bird => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.innerHTML = `
+                    <div class="bird-name">${bird.name}</div>
+                    <div class="scientific-name">${bird.sciName}</div>
+                `;
+                button.onclick = () => checkAnswer(bird, button);
+                optionsDiv.appendChild(button);
+            });
+        }
+
+        function checkAnswer(selectedBird, button) {
+            const allButtons = document.querySelectorAll('.option-btn');
+            allButtons.forEach(btn => btn.disabled = true);
+            
+            const isCorrect = selectedBird.sciName === currentBird.sciName;
+            
+            if (isCorrect) {
+                button.classList.add('correct');
+                score++;
+                document.getElementById('score').textContent = score;
+            } else {
+                button.classList.add('incorrect');
+                allButtons.forEach(btn => {
+                    if (btn.textContent.includes(currentBird.name)) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Show feedback
+            const feedback = document.getElementById('feedback');
+            feedback.className = 'feedback show ' + (isCorrect ? 'correct' : 'incorrect');
+            document.getElementById('feedbackTitle').textContent = isCorrect ? '✅ Correct!' : '❌ Incorrect';
+            document.getElementById('feedbackContent').innerHTML = `
+                <div class="feedback-detail">
+                    <strong>Correct Answer:</strong> ${currentBird.name}<br>
+                    <em>${currentBird.sciName}</em>
+                </div>
+                <div class="feedback-detail">
+                    <strong>Taxonomy:</strong> Family ${currentBird.family}, Genus ${currentBird.genus}
+                </div>
+                ${currentSound.type ? `<div class="feedback-detail"><strong>Call type:</strong> ${currentSound.type}</div>` : ''}
+                ${currentSound.location ? `<div class="feedback-detail"><strong>Recorded in:</strong> ${currentSound.location}</div>` : ''}
+                <div class="attribution">
+                    Recording by ${currentSound.recordist || 'Unknown'} • 
+                    <a href="https://xeno-canto.org/${currentSound.catalogId}" target="_blank">View on Xeno-canto</a> • 
+                    Quality: ${currentSound.quality}
+                </div>
+            `;
+        }
+
+        function nextQuestion() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            const audio = document.getElementById('birdAudio');
+            audio.pause();
+            audio.currentTime = 0;
+            loadQuestion();
+        }
+
+        // Start quiz
+        console.log('Starting quiz...');
+        loadQuestion();
+    </script>
+</body>
+</html>
